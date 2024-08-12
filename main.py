@@ -1,28 +1,41 @@
 import ollama
+import os
+from dotenv import load_dotenv
 
-# Get user input from terminal
-user_input = input("Enter your question: ")
+load_dotenv()
 
-stream = ollama.chat(
-    model="llama3.1:8b-instruct-q8_0",
-    stream=True,
-    messages=[
+
+def chat():
+    messages = [
         {
             "role": "system",
             "content": "You are a helpful assistant."
-        },
-        {
-            "role": "user",
-            "content": user_input
         }
     ]
-)
 
-# for direct response
-# for key, value in stream.items():
-#     if key == "message":
-#         print(value['content'])
+    while True:
+        user_input = input("\nEnter your question (or 'exit' to quit): ")
 
-# for streaming response
-for chunk in stream:
-    print(chunk['message']['content'], end='', flush=True)
+        if user_input.lower() == 'exit':
+            break
+
+        messages.append({"role": "user", "content": user_input})
+
+        stream = ollama.chat(
+            model=os.getenv('OLLAMA_MODEL'),
+            stream=True,
+            messages=messages
+        )
+
+        print("\nAssistant: ", end='', flush=True)
+        for chunk in stream:
+            print(chunk['message']['content'], end='', flush=True)
+
+        messages.append(
+            {"role": "assistant", "content": chunk['message']['content']})
+
+    print("\nGoodbye!")
+
+
+if __name__ == "__main__":
+    chat()
